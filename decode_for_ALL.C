@@ -15,6 +15,8 @@ using namespace std;
 #define MAXEVT 100000
 #define bDEBUG false 
 
+#define bNKFADC2CH false 
+
 map<int, int> daq_gatewidth = {{31, 2}, {41, 2}, {42, 2}};
 map<int, int> daq_nch = {{1, 4}, {2, 4}, {31, 32}, {41, 32}, {42, 32}}; 
 map<int, int> daq_datalength = {{1, 8192/4}, {2, 512/4}, {31, 256}, {41, 512}, {42, 512}};
@@ -50,6 +52,10 @@ void decode_for_ALL(int RunNo = 2080, int nEvtToRead = 10000, const char* inPath
 		}
 	}
 	cout << "*****calo map check*****" << endl;
+
+	if ( bNKFADC2CH ){
+		cout << "*****decode NKFADC ONLY 2 channels, CH2 and CH3 *****" << endl;
+	}
 
 	//Output file
 
@@ -193,6 +199,10 @@ void decode_for_ALL(int RunNo = 2080, int nEvtToRead = 10000, const char* inPath
 					char dataChop[thisnch][thisDL];
 
 					for (int jj=0; jj<thisnch; jj++){
+
+						//Skip channel 1 and 4 for the 2CH mode for NKFADC500
+						if ( bNKFADC2CH && (jj==0 || jj==3) ) continue;
+
 						for (int kk=0; kk<thisDL; kk++) dataChop[jj][kk] = data[jj + 4*kk];
 
 						int data_length = 0;
@@ -305,6 +315,8 @@ void decode_for_ALL(int RunNo = 2080, int nEvtToRead = 10000, const char* inPath
 
 						if ( bGOOD ){
 							hEvtCount[imid]->Fill(tcb_trigger_number);
+							//For the 2CH mode, fill the trigger number again to satisfy the check of filled channel number  
+							if ( bNKFADC2CH ) hEvtCount[imid]->Fill(tcb_trigger_number);
 
 							for (int a=0; a<wlength; a++)
 							{
